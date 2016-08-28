@@ -1,10 +1,10 @@
-﻿## Saint-Petersburg Map Application
+## Saint-Petersburg Map Application
 
 This Saint-Petersburg Map Application project is a part of Udacity [Front-End Developer Nanodegree](https://www.udacity.com/course/front-end-web-developer-nanodegree--nd001).
 
 ### Getting started
 
-You can run this app [via this link](https://antmatr.github.io/frontend-nanodegree-web-optimization/) or download this repository and try it locally via ```index.html```.
+You can run this app [via this link](https://antmatr.github.io/frontend-nanodegree-neighborhood-map/) or download this repository and try it locally via ```index.html```.
 
 ### Features
 
