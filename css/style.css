@@ -16,6 +16,7 @@ img {
 }
 
 .title {
+    display:none;
     position:fixed;
     top:60px;
     left:50%;
@@ -23,6 +24,9 @@ img {
     text-align:center;
     z-index:3;
     pointer-events:none;
+    will-change:opacity;
+    transition:opacity 0.3s ease-out;
+    opacity:1;
 }
 .title:before {
     content:'Your';
@@ -55,13 +59,13 @@ img {
     width:90vw;
 }
 .title:after {
-    content:'Map';
+    content:'Places';
     position:absolute;
     bottom:0;
     right:50%;
-    width:60px;
-    height:60px;
-    line-height:60px;
+    width:90px;
+    height:90px;
+    line-height:90px;
     font-size:22px;
     font-weight:bold;
     background:#fff;
@@ -76,7 +80,7 @@ img {
     top:0;
     left:0;
     width:100vw;
-    height:100vh;
+    height:50vh;
     background:#ddddff;
     z-index:0;
     transform:translate(0,0);
@@ -97,13 +101,12 @@ img {
     bottom:0;
     left:0;
     width:100%;
-    height:60vh;
-    padding:50px 10px 10px;
+    height:50vh;
+    padding:20px 10px 10px;
     background:#fff;
-    transform:translate(0,110%);
     transition:transform 0.3s ease-in-out;
     z-index:1;
-    will-change:transform;
+    overflow-y:scroll;
 }
 .input-btn {
     position:absolute;
@@ -119,16 +122,30 @@ img {
     text-align:center;
     cursor:pointer;
 }
+.search {
+    width:100%;
+}
+
+.list-contents {
+    padding:0;
+}
+.list-contents-item {
+    padding:10px;
+    cursor:pointer;
+}
+.list-contents-item:hover {
+    background:#ddddff;
+}
 
 .output-block {
     position:fixed;
     bottom:0;
     right:0;
     width:100%;
-    height:60vh;
+    height:50vh;
     padding:10px;
     background:#fff;
-    transform:translate(0,110%);
+    transform:translate(0,100%);
     transition:transform 0.3s ease-in-out;
     z-index:2;
     will-change:transform;
@@ -158,9 +175,9 @@ img {
 .close:before {
     content:'x';
 }
-.input .input-block, .output .output-block {
+.output .output-block {
     transform:translate(0,0);
 }
-.input .map-block,.output .map-block {
-    transform:translate(0,-15%);
+.output .title {
+    opacity:0;
 }

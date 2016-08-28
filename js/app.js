@@ -1,111 +1,155 @@
 ﻿var map;
-var markersVisible = [];
-var markersFavorite = [];
-var markers = [];
 var outputBlock = document.getElementById('output-block');
 var outputPano = document.getElementById('output-block-pano');
 var outputData = document.getElementById('output-block-data');
 var outputWiki = document.getElementById('output-block-wiki');
-var body = document.getElementsByTagName('body')[0];
+var inputBlock = document.getElementById('input-block');
+var searchInput = document.getElementById('places-search');
+var searchBtn = document.getElementById('places-search-go');
+var inputBtn = document.getElementById('show-inputs');
+var placesList = document.getElementById('places-list');
+var container = document.getElementsByTagName('body')[0];
 
-function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 59.9342802, lng: 30.3350986 },
-        zoom: 11,
-        mapTypeControl: false
-    });
-
-    var zoomAutocomplete = new google.maps.places.Autocomplete(document.getElementById('universal-search'));
-    //zoomAutocomplete.bindTo('bounds', map);
-    //// Create a searchbox in order to execute a places search
-    //var searchBox = new google.maps.places.SearchBox(
-    //    document.getElementById('places-search'));
-    //// Bias the searchbox to within the bounds of the map.
-    //searchBox.setBounds(map.getBounds());
-
-    var markerInfo = new google.maps.InfoWindow();
-
-    var iconDefault = makeMarkerIcon('ffffff');
-    var iconFavorite = makeMarkerIcon('996699');
-
-    function makeMarkerIcon(markerColor) {
-        var markerImage = new google.maps.MarkerImage(
-          'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|' + markerColor +
-          '|40|_|%E2%80%A2',
-          new google.maps.Size(21, 34),
-          new google.maps.Point(0, 0),
-          new google.maps.Point(10, 34),
-          new google.maps.Size(21, 34));
-        return markerImage;
-    }
-
-    var defaultLocations = [
-        { title: "State Hermitage Museum", location: { lat: 59.939765, lng: 30.314514 }, placeId: 'ChIJ6eLLMgsxlkYR_F1QoCoDTgc', favorite:true },
-        { title: "Peter and Paul Fortress", location: { lat: 59.9507272, lng: 30.3193458 }, placeId: 'ChIJfzxD1BQxlkYR9B3Ia2hJ7xU', favorite: true },
-        { title: "Mariinsky Theatre", location: { lat: 59.9254282, lng: 30.2959277 }, placeId: 'ChIJw6wMCuMwlkYRzOE8T6Idd6o', favorite: true },
-        { title: "Tauride Gardens", location: { lat: 59.94651940000001, lng: 30.3685902 }, placeId: 'ChIJDwMchpsxlkYRUISufCQ53A8', favorite: true },
-        { title: "Smolny Cathedral", location: { lat: 59.9479349, lng: 30.3942818 }, placeId: 'ChIJpwGZM4kxlkYRjuEWdrqVLIA', favorite: true },
-        { title: "Saint Petersburg's 300th Anniversary Park", location: { lat: 59.9828807, lng: 30.2014797 }, placeId: 'ChIJ65CvQWE2lkYRiNrWRdnnZUU', favorite: true }
+function viewModel() {
+    var self = this;
+    self.initialPlacesIds = [
+        { placeId: 'ChIJ6eLLMgsxlkYR_F1QoCoDTgc' },
+        { placeId: 'ChIJfzxD1BQxlkYR9B3Ia2hJ7xU' },
+        { placeId: 'ChIJw6wMCuMwlkYRzOE8T6Idd6o' },
+        { placeId: 'ChIJDwMchpsxlkYRUISufCQ53A8' },
+        { placeId: 'ChIJpwGZM4kxlkYRjuEWdrqVLIA' },
+        { placeId: 'ChIJ65CvQWE2lkYRiNrWRdnnZUU' }
     ];
+    self.places = ko.observableArray();
+    self.markersVisible = ko.observableArray();
+    self.placeInfoWindow;
+    self.bounds;
 
-    var bounds = new google.maps.LatLngBounds();
-
-    for (var i = 0; i < defaultLocations.length; i++) {
-        // Get the position from the location array.
-        var position = defaultLocations[i].location;
-        var title = defaultLocations[i].title;
-        // Create a marker per location, and put into markers array.
-        var marker = new google.maps.Marker({
-            map: map,
-            position: position,
-            title: title,
-            animation: google.maps.Animation.DROP,
-            icon: defaultLocations[i].favorite ? iconFavorite : iconDefault,
-            id: i,
-            placeId: defaultLocations[i].placeId
-        });
-        // Push the marker to our array of markers.
-        markersVisible.push(marker);
-        // Create an onclick event to open the large infowindow at each marker.
-        marker.addListener('click', function () {
-            bounds = new google.maps.LatLngBounds();
-            bounds.extend(this.position);
-            map.fitBounds(bounds);
-            //map.setCenter(this.position);
-            map.setZoom(15);
-            showInfoWindow(this, markerInfo);
-            showOutputBlock(this);
+    self.initMap = function() {
+        self.map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: 59.9342802, lng: 30.3350986 },
+            zoom: 11,
+            mapTypeControl: false
         });
 
-        fitToMarkers(markersVisible);
-    }
+        self.boundsSPB = new google.maps.LatLngBounds();
+        self.boundsSPB.extend(new google.maps.LatLng(60.089675, 30.559783));
+        self.boundsSPB.extend(new google.maps.LatLng(59.74521590000001, 30.0903322));
 
-    function fitToMarkers(markers) {
-        var bounds = new google.maps.LatLngBounds();
-        for (var i = 0; i < markers.length; i++) {
-            markers[i].setMap(map);
-            bounds.extend(markers[i].position);
+        self.initInitialPlaces = function (placesIDs) {
+            var placeInfoService = new google.maps.places.PlacesService(self.map);
+            for (var i = 0; i < placesIDs.length; i++) {
+                placeInfoService.getDetails(placesIDs[i], callback);
+                function callback(place, status) {
+                    if (status == google.maps.places.PlacesServiceStatus.OK) {
+                        self.places.push(place);
+                        createMarker(place);
+                        fitToMarkers(self.markersVisible());
+                    } else {
+                        alert('initInitialPlaces() error: ' + status);
+                    }
+                }
+            }
         }
-        map.fitBounds(bounds);
+        self.initInitialPlaces(self.initialPlacesIds);
+        self.initInputs();
+    };
+
+    self.initInputs = function() {
+        var searchBox = new google.maps.places.SearchBox(searchInput, {
+            bounds: self.boundsSPB
+        });
+
+        searchBtn.addEventListener('click', function () {
+            var placesService = new google.maps.places.PlacesService(self.map);
+            placesService.textSearch({
+                query: searchInput.value,
+                bounds: self.boundsSPB
+            }, function (results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    self.createMarkersForPlaces(results);
+                } else {
+                    alert('Error: ' + status);
+                }
+            });
+        });
     }
 
-    function showInfoWindow(marker, infowindow) {
+    self.createMarker = function(place) {
+        var icon = {
+            url: place.icon,
+            size: new google.maps.Size(30, 30),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 15),
+            scaledSize: new google.maps.Size(30, 30)
+        };
+        var marker = new google.maps.Marker({
+            map: self.map,
+            icon: icon,
+            title: place.name,
+            position: place.geometry.location,
+            placeId: place.place_id
+        });
+        self.placeInfoWindow = new google.maps.InfoWindow();
+        marker.addListener('click', function () {
+            if (self.placeInfoWindow.marker == this) {
+                console.log("This infowindow already is on this marker!");
+            } else {
+                showPlaceInfo(this);
+            }
+        });
+        self.markersVisible.push(marker);
+    }
+
+    self.showPlaceInfo = function(marker) {
+        self.bounds = new google.maps.LatLngBounds();
+        self.bounds.extend(marker.position);
+        self.map.fitBounds(bounds);
+        self.map.setZoom(15);
+        showInfoWindow(marker, self.placeInfoWindow);
+        showOutputBlock(marker);
+    }
+    self.createMarkersForPlaces = function(places) {
+        self.hideMarkers(self.markersVisible());
+        self.markersVisible.removeAll();
+        placesList.innerHTML = '';
+        for (var i = 0; i < places.length; i++) {
+            self.createMarker(places[i]);
+        }
+        fitToMarkers(self.markersVisible());
+    }
+
+    self.hideMarkers = function(markers) {
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(null);
+        }
+    }
+
+    self.showInfoWindow = function(marker, infowindow) {
         if (infowindow.marker != marker) {
             infowindow.setContent('');
             infowindow.marker = marker;
+            infowindow.setContent('<h3 class="infowindow-title">' + marker.title + '</h3>');
+            infowindow.open(viewModel.map, marker);
             infowindow.addListener('closeclick', function () {
-                fitToMarkers(markersVisible);
-                hideOutputBlock();
+                self.fitToMarkers(self.markersVisible());
+                self.hideOutputBlock();
                 infowindow.marker = null;
             });
-            infowindow.setContent('<h3 class="infowindow-title">' + marker.title + '</h3>');
-            infowindow.open(map, marker);
         }
     }
 
-    function showOutputBlock(marker) {
-        body.classList.add('output');
+    self.fitToMarkers = function(markers) {
+        self.bounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(self.map);
+            self.bounds.extend(markers[i].position);
+        }
+        self.map.fitBounds(bounds);
+    }
 
+    self.showOutputBlock = function(marker) {
+        container.classList.add('output');
         var streetViewService = new google.maps.StreetViewService();
         var radius = 100;
         function getStreetView(data, status) {
@@ -128,38 +172,16 @@ function initMap() {
         streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
 
 
-        getPlacesDetails(marker, outputData);
-
-        outputWiki.innerHTML = '';
-        var wikiRequestTimeout = setTimeout(function () {
-            outputWiki.innerHTML = '<h3>Where are no wikipedia resources about this place</h3>';
-        }, 5000);
-        url = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + marker.title + '&format=json&callback=wikiCallback';
-        $.ajax({
-            url: url,
-            dataType: 'jsonp',
-            success: function (data) {
-                var articles = data[1];
-                if (articles.length >= 1) {
-                    outputWiki.innerHTML = '<h3>Wikipedia articles:</h3>';
-                }
-                for (var i = 0, l = articles.length; i < l; i++) {
-                    var title = articles[i];
-                    outputWiki.innerHTML +='<li><a href="http://en.wikipedia.org/wiki/' + title + '">' + title + '</a></li>';
-                }
-                outputWiki.innerHTML += '<br><br>';
-            }
-        }).done(function () {
-            clearTimeout(wikiRequestTimeout);
-        })
+        self.getPlacesDetails(marker, outputData);
+        self.getPlaceWiki(marker, outputWiki);
     }
 
-    function hideOutputBlock() {
-        body.classList.remove('output');
+    self.hideOutputBlock = function() {
+        container.classList.remove('output');
     }
 
-    function getPlacesDetails(marker, element) {
-        var service = new google.maps.places.PlacesService(map);
+    self.getPlacesDetails = function(marker, element) {
+        var service = new google.maps.places.PlacesService(self.map);
         service.getDetails({
             placeId: marker.placeId
         }, function (place, status) {
@@ -170,7 +192,7 @@ function initMap() {
                 //}
                 if (place.photos) {
                     innerHTML += '<img src="' + place.photos[0].getUrl(
-                        { maxHeight: 400, maxWidth: 360 }) + '">';
+                        { maxHeight: 400, maxWidth: 340 }) + '">';
                 }
                 if (place.formatted_address) {
                     innerHTML += '<br>' + place.formatted_address;
@@ -194,57 +216,33 @@ function initMap() {
         });
     }
 
+    self.getPlaceWiki = function(marker, element) {
+        element.innerHTML = '';
+        var wikiRequestTimeout = setTimeout(function () {
+            element.innerHTML = '<h3>Where are no wikipedia resources about this place</h3>';
+        }, 5000);
+        url = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + marker.title + '&format=json&callback=wikiCallback';
+        $.ajax({
+            url: url,
+            dataType: 'jsonp',
+            success: function (data) {
+                var articles = data[1];
+                if (articles.length >= 1) {
+                    element.innerHTML = '<h3>Wikipedia articles:</h3>';
+                }
+                for (var i = 0, l = articles.length; i < l; i++) {
+                    var title = articles[i];
+                    element.innerHTML += '<li><a href="http://en.wikipedia.org/wiki/' + title + '">' + title + '</a></li>';
+                }
+                element.innerHTML += '<br><br>';
+            }
+        }).done(function () {
+            clearTimeout(wikiRequestTimeout);
+        })
+    }
 };
 
-//var body = document.getElementsByTagName('body')[0];
-//var inputBlock = document.getElementById('input-block');
-//var outputBlock = document.getElementById('output-block');
-//var cityInput = document.getElementById('city-input');
-//var map;
-//var geocoder;
 
-//var model = {
-//    currentAddress: ko.observable("Saint-Petersburg, Russia"),
-//    hardcodedMarkers: [
-//        { title: "State Hermitage Museum", location: { lat: 59.939765, lng: 30.314514 } },
-//        { title: "Peter and Paul Fortress", location: { lat: 59.9507272, lng: 30.3193458 } },
-//        { title: "Mariinsky Theatre", location: { lat: 59.9256452, lng: 30.2938087 } },
-//        { title: "Tauride Gardens", location: { lat: 59.945957, lng: 30.3708423 } },
-//        { title: "Smolny Cathedral", location: { lat: 59.9479349, lng: 30.3942818 } },
-//        { title: "Saint Petersburg's 300th Anniversary Park", location: { lat: 59.9828578, lng: 30.2013929 } }
-//    ]
-//};
 
-//function setCenterByAddress(address) {
-//    geocoder.geocode({ 'address': address }, function (results, status) {
-//        if (status == google.maps.GeocoderStatus.OK) {
-//            map.setCenter(results[0].geometry.location);
-//        } else {
-//            alert("Geocode was not successful for the following reason: " + status);
-//        }
-//    });
-//};
 
-//function initMap() {
-//    geocoder = new google.maps.Geocoder();
-//    map = new google.maps.Map(document.getElementById('map'), {
-//        center: { lat: 59.9171483, lng: 30.0448896 },
-//        zoom: 11,
-//        mapTypeControl: false
-//    });
-//    setCenterByAddress(model.currentAddress());
-//};
-
-//var viewModel = {
-//    updateCity: function () {
-//        model.currentAddress(cityInput.value);
-//        setCenterByAddress(model.currentAddress());
-//    },
-//    closeBlock: function (block) {
-//        body.classList.remove(block);
-//    },
-//    openBlock: function (block) {
-//        body.classList.add(block);
-//    }
-//};
-//ko.applyBindings(viewModel);
+ko.applyBindings(viewModel());

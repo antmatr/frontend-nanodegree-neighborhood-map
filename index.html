@@ -6,40 +6,32 @@
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="">
+<body>
     <div class="title input">
-        <h1 id="city" type="text" class="title-content">Saint-Petersburg, Russia</h1>
+        <h1 id="city" type="text" class="title-content">Saint-Petersburg</h1>
     </div>
     <div class="map-block">
         <div class="map" id="map"></div>
     </div>
 
     <div class="input-block">
-        <div class="close"></div>
-        <input id="universal-search" type="text" class="search" placeholder="Address or Search Query">
-        <button>search</button>
-        <div class="markers-list">
-            <label>Show only favorites</label>
-            <input type="checkbox" checked="checked" />
-            <ul class="list-controls">
-                <li>По сути список фильтров мест</li>
+        <input id="places-search" type="text" class="search" placeholder="Enter address or place to find">
+        <input type="submit" class="search-btn" id="places-search-go" value="Go!" />
+        <div class="places-list">
+            <ul class="list-filters" id="places-filters">
                 <li>all</li>
-                <li>food</li>
+                <li>restaurants</li>
                 <li>stores</li>
-                <li>sightseengs</li>
-                <li>inns</li>
+                <li>museums</li>
+                <li>other</li>
             </ul>
-            <ul class="list-contents">
-                <li>При нажатии открывается окно с инфой о выбранном итеме</li>
-                <li>Здесь же кнопки добавить/удалить из избранного</li>
-                <li>Place3</li>
-                <li>Place4</li>
-                <li>Place5</li>
+            <ul class="list-contents" id="places-list" data-bind="foreach: markersVisible">
+                <li class="list-contents-item" data-bind="text: title, click: function(){showPlaceInfo(this)}"></li>
             </ul>
         </div>
     </div>
 
-    <div class="input-btn">Ненужная кнопка</div>
+    <div class="input-btn" id="show-inputs">S</div>
 
     <div class="output-block" id="output-block">
         <div class="places-info" id="output-block-data"></div>
