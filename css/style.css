@@ -6,79 +6,25 @@ html {
     height:100%;
 }
 body {
-    position:relative;
     height:100%;
     font-family:Calibri,Arial,sans-serif;
+    background:#ddf;
+}
+.container {
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
 }
 img {
     display:block;
     max-width:100%;
 }
 
-.title {
-    display:none;
-    position:fixed;
-    top:60px;
-    left:50%;
-    transform:translate(-50%,0);
-    text-align:center;
-    z-index:3;
-    pointer-events:none;
-    will-change:opacity;
-    transition:opacity 0.3s ease-out;
-    opacity:1;
-}
-.title:before {
-    content:'Your';
-    position:absolute;
-    top:0;
-    left:50%;
-    width:60px;
-    height:60px;
-    line-height:60px;
-    font-size:22px;
-    font-weight:bold;
-    border-radius:50%;
-    color:#330033;
-    background:#fff;
-    transform:translate(-150%,-60%);
-    z-index:0;
-}
-.title-content {
-    position:relative;
-    font-size:36px;
-    font-weight:normal;
-    color:#330033;
-    text-shadow:-2px -2px 0 #fff;
-    background:transparent;
-    border:none;
-    outline:none;
-    margin:0;
-    text-align:center;
-    z-index:2;
-    width:90vw;
-}
-.title:after {
-    content:'Places';
-    position:absolute;
-    bottom:0;
-    right:50%;
-    width:90px;
-    height:90px;
-    line-height:90px;
-    font-size:22px;
-    font-weight:bold;
-    background:#fff;
-    border-radius:50%;
-    color:#330033;    
-    transform:translate(150%,60%);
-    z-index:1;
-}
-
 .map-block {
     position:fixed;
     top:0;
-    left:0;
+    right:0;
     width:100vw;
     height:50vh;
     background:#ddddff;
@@ -106,7 +52,8 @@ img {
     background:#fff;
     transition:transform 0.3s ease-in-out;
     z-index:1;
-    overflow-y:scroll;
+    overflow-y:auto;
+    border-right:1px solid #ddf;
 }
 .input-btn {
     position:absolute;
@@ -123,24 +70,59 @@ img {
     cursor:pointer;
 }
 .search {
-    width:100%;
+    display:flex;
+    flex-wrap:nowrap;
 }
-
+.search-text {
+    width:80%;
+    padding:10px;
+    outline:none;
+    border-color:#ddddff;
+    border-width: 1px 0 1px 1px;
+    border-style: solid;
+}
+.search-btn {
+    width:20%;
+    background:#ddddff;
+    border:none;
+}
+.list-filters {
+    padding:0;
+    list-style:none;
+    display:flex;
+    flex-wrap: nowrap;
+}
+.list-filters-item {
+    padding:10px;
+    cursor:pointer;
+    text-transform:capitalize;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+.list-filters-item.active {
+    background:#ddddff;
+}
 .list-contents {
     padding:0;
+    list-style:none;
 }
 .list-contents-item {
-    padding:10px;
     cursor:pointer;
 }
 .list-contents-item:hover {
     background:#ddddff;
 }
+.list-contents-text {
+    display:block;
+    padding:10px;
+}
 
 .output-block {
     position:fixed;
     bottom:0;
-    right:0;
+    left:0;
     width:100%;
     height:50vh;
     padding:10px;
@@ -149,35 +131,48 @@ img {
     transition:transform 0.3s ease-in-out;
     z-index:2;
     will-change:transform;
-    overflow-y:scroll;
+    overflow-y:auto;
 }
 .panorama {
     width:100%;
     height:400px;
 }
-.close {
-    position:absolute;
-    top:0;
-    left:50%;
-    width:60px;
-    height:60px;
-    line-height:50px;
-    font-size:50px;
-    text-align:center;
-    color:#330033;
-    border-radius:50%;
-    background:#fff;
-    cursor:pointer;
-    transform:translate(-50%,-50%);
-    border-top:3px solid #330033;
-    border-top:3px solid #330033;
-}
-.close:before {
-    content:'x';
-}
-.output .output-block {
+
+.output-block.active {
     transform:translate(0,0);
 }
-.output .title {
-    opacity:0;
+
+@media screen and (min-width:720px) {
+    .output-block {
+        transform: translate(-100%,0);
+    }
+    .map-block,.input-block,.output-block {
+        width:50vw;
+        height:100vh;
+    }
+}
+
+@media screen and (min-width:1200px) {
+    .input-block,.output-block,.map-block {
+        position:static;
+        left:auto;
+        right:auto;
+    }
+    .input-block,.output-block {
+        width:400px;
+        transform:translate(0,0);
+    }
+    .output-block {
+        border-left:1px solid #ddf;
+    }
+    .map-block {
+        width:calc(100% - 700px);
+        position:static;
+    }
+    .container {
+        max-width:1600px;
+        margin:0 auto;
+        display:flex;
+        flex-wrap:nowrap;
+    }
 }

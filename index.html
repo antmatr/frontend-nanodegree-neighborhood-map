@@ -3,96 +3,45 @@
 <head>
     <title>Your City Map</title>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="title input">
-        <h1 id="city" type="text" class="title-content">Saint-Petersburg</h1>
-    </div>
-    <div class="map-block">
-        <div class="map" id="map"></div>
+    <div class="container">
+        <section class="input-block">
+            <div class="search">
+                <input id="places-search" type="text" class="search-text" placeholder="Enter address or place to find">
+                <input type="submit" class="search-btn" id="places-search-go" value="Go!" />
+            </div>
+            <div class="places-list">
+                <ul class="list-filters" id="places-filters" data-bind="foreach: placesFilters">
+                    <li data-bind="click: function(){self.updateFilters($data.filter);}, attr: { class: self.currentFilter() === $data.filter ? 'list-filters-item active' : 'list-filters-item' }, text:$data.name"></li>
+                </ul>
+                <ul class="list-contents" id="places-list" data-bind="foreach: markersVisible">
+                    <li class="list-contents-item" data-bind="click: function(){showPlaceInfo(this)}, visible: checkMarkerType(currentFilter(), $data)">
+                        <span class="list-contents-text" data-bind="text: title, event: {mouseover: function(){$data.setAnimation(google.maps.Animation.BOUNCE);}, mouseout: function(){$data.setAnimation(null);}}"></span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="map-block">
+            <div class="map" id="map"></div>
+        </section>
+
+        <section class="output-block" id="output-block" data-bind="attr: { class: self.outputBlockActive() === true ? 'output-block active' : 'output-block'}">
+            <div class="places-info" id="output-block-data">
+                Click on a marker to see additional information.
+            </div>
+            <div class="wikipedia" id="output-block-wiki"></div>
+            <div class="panorama" id="output-block-pano"></div>
+        </section>
     </div>
 
-    <div class="input-block">
-        <input id="places-search" type="text" class="search" placeholder="Enter address or place to find">
-        <input type="submit" class="search-btn" id="places-search-go" value="Go!" />
-        <div class="places-list">
-            <ul class="list-filters" id="places-filters">
-                <li>all</li>
-                <li>restaurants</li>
-                <li>stores</li>
-                <li>museums</li>
-                <li>other</li>
-            </ul>
-            <ul class="list-contents" id="places-list" data-bind="foreach: markersVisible">
-                <li class="list-contents-item" data-bind="text: title, click: function(){showPlaceInfo(this)}"></li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="input-btn" id="show-inputs">S</div>
-
-    <div class="output-block" id="output-block">
-        <div class="places-info" id="output-block-data"></div>
-        <div class="wikipedia" id="output-block-wiki"></div>
-        <div class="panorama" id="output-block-pano"></div>
-    </div>
     <script src="js/knockout-3.4.0.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/app.js"></script>
     <script async defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyBxcE0sloWCoxfuq8lC43rhSLeYcdneAKc&v=3&callback=initMap"></script>
 </body>
 </html>
-
-
-<!--<body class="output">
-    <div class="title input">
-        <h1 id="city" type="text" class="title-content" data-bind="text: model.currentAddress()">Saint-Petersburg, Russia</h1>
-    </div>
-    <div class="map-block">
-        <div class="map" id="map"></div>
-    </div>
-
-    <div class="input-block">
-        <div class="close" data-bind="click: closeBlock.bind($data,'input')"></div>
-        <input id="universal-search" type="text" class="search" placeholder="Address or Search Query" data-bind="event: {change: updateCity}">
-        <button data-bind="click: function () {openBlock('output'); closeBlock('input');}">search</button>
-        <div class="markers-list">
-            <label>Show only favorites</label>
-            <input type="checkbox" checked="checked" />
-            <ul class="list-controls">
-                <li>По сути список фильтров мест</li>
-                <li>all</li>
-                <li>food</li>
-                <li>stores</li>
-                <li>sightseengs</li>
-                <li>inns</li>
-            </ul>
-            <ul class="list-contents">
-                <li>При нажатии открывается окно с инфой о выбранном итеме</li>
-                <li>Здесь же кнопки добавить/удалить из избранного</li>
-                <li>Place3</li>
-                <li>Place4</li>
-                <li>Place5</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="input-btn" data-bind="click: openBlock.bind($data,'input')">Ненужная кнопка</div>
-
-    <div class="output-block">
-        <div class="close" data-bind="click: closeBlock.bind($data,'output')"></div>
-        <h4>Info about:<span data-bind="text: model.currentCity"></span></h4>
-        <div class="panorama">Блок со стрит-вью</div>
-        <div class="places-info">
-            <h6>Google places data:</h6>
-        </div>
-        <div class="wikipedia">
-            <h6>Wikipedia article:</h6>
-        </div>
-    </div>
-    <script src="js/knockout-3.4.0.js"></script>
-    <script src="js/app.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyBxcE0sloWCoxfuq8lC43rhSLeYcdneAKc&v=3&callback=initMap"></script>
-</body>-->
