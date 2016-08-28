@@ -3,6 +3,8 @@ var searchInput = document.getElementById('places-search');
 
 function viewModel() {
     var self = this;
+
+    // Array of hardcoded PlaceId's to initialization
     self.initialPlacesIds = [
         { placeId: 'ChIJ6eLLMgsxlkYR_F1QoCoDTgc' },
         { placeId: 'ChIJfzxD1BQxlkYR9B3Ia2hJ7xU' },
@@ -16,6 +18,9 @@ function viewModel() {
     self.markers = [];
     self.markersVisible = ko.observableArray();
     self.placeInfoWindow;
+    self.outputBlockActive = ko.observable(false);
+
+    // Filters used in places list
     self.placesFilters = [
         {
             name: 'All',
@@ -39,19 +44,22 @@ function viewModel() {
         }
     ];
     self.currentFilter = ko.observable(self.placesFilters[0].filter);
-    self.outputBlockActive = ko.observable(false);
 
     self.initMap = function () {
+        // Base map, centred on Saint-Petersburg City
         self.map = new google.maps.Map(document.getElementById('map'), {
             center: { lat: 59.9342802, lng: 30.3350986 },
             zoom: 11,
             mapTypeControl: false
         });
 
+        // Bounds of the City borders
         self.boundsSPB = new google.maps.LatLngBounds();
         self.boundsSPB.extend(new google.maps.LatLng(60.089675, 30.559783));
         self.boundsSPB.extend(new google.maps.LatLng(59.74521590000001, 30.0903322));
 
+        // Function for transformation of initialPlacesIds
+        // into real google.maps place-objects for further use
         self.initInitialPlaces = function (placesIDs) {
             var placeInfoService = new google.maps.places.PlacesService(self.map);
             var places = [];
@@ -61,7 +69,9 @@ function viewModel() {
                     if (status == google.maps.places.PlacesServiceStatus.OK) {
                         places.push(place);
                         if (places.length == placesIDs.length) {
-                            createMarkers(places);
+                            // As soon as we've got last place respond
+                            // we create markets for those places
+                            self.createMarkers(places);
                         };
                     } else {
                         alert('initInitialPlaces() error: ' + status);
@@ -73,11 +83,11 @@ function viewModel() {
         self.initInputs();
     };
 
+    // Searchbox and SearchBtn initialization
     self.initInputs = function () {
         var searchBox = new google.maps.places.SearchBox(searchInput, {
             bounds: self.boundsSPB
         });
-
         document.getElementById('places-search-go').addEventListener('click', function () {
             var placesService = new google.maps.places.PlacesService(self.map);
             placesService.textSearch({
@@ -93,6 +103,7 @@ function viewModel() {
         });
     }
 
+    // Check if marker belongs to this type of places
     self.checkMarkerType = function (type, marker) {
         if (type === 'all') {
             return true;
@@ -105,7 +116,9 @@ function viewModel() {
         return false;
     }
 
+    // Filtering for list and markers
     self.updateFilters = function (filter) {
+        // do somthing only if it is not the same filter:
         if (self.currentFilter() != filter) {
             self.currentFilter(filter);
             self.hideMarkers(self.markersVisible());
@@ -128,12 +141,14 @@ function viewModel() {
         }
     }
 
+    // Update additional place information
     self.showPlaceInfo = function (marker) {
         fitToMarkers([marker]);
         showInfoWindow(marker, self.placeInfoWindow);
         showOutputBlock(marker);
     }
 
+    // Create markers for the given array of places
     self.createMarkers = function (places) {
         self.hideMarkers(self.markersVisible());
         self.markers = [];
@@ -181,6 +196,7 @@ function viewModel() {
         fitToMarkers(self.markersVisible());
     }
 
+    // Markers infowindow function
     self.showInfoWindow = function (marker, infowindow) {
         if (infowindow.marker != marker) {
             infowindow.marker = marker;
@@ -194,6 +210,7 @@ function viewModel() {
         }
     }
 
+    // map fit function
     self.fitToMarkers = function (markers) {
         if (markers.length > 0) {
             var bounds = new google.maps.LatLngBounds();
@@ -203,15 +220,31 @@ function viewModel() {
             }
             self.map.fitBounds(bounds);
             if (markers.length == 1) {
+                // if there are only One marker in set (filtered, for example)
+                // map will be zoomed out to prevent too much zoom in
                 self.map.setZoom(15);
             }
         } else {
+            // if there are Zero markers in set (filtered, for example)
+            // map will be fitted to the City boundaries
             self.map.fitBounds(self.boundsSPB);
         }
     }
 
+    // function of place additional info Compilation
     self.showOutputBlock = function (marker) {
+
+        // if output block was hidden - it will be shown
+        // (used for small screens)
         self.outputBlockActive(true);
+
+        // google.places for additional info (Address, Phone, Image, Open Hours);
+        self.getPlacesDetails(marker, document.getElementById('output-block-data'));
+
+        // wikipedia API for some articles about selected place
+        self.getPlaceWiki(marker, document.getElementById('output-block-wiki'));
+
+        // creating google street view panorama
         var streetViewService = new google.maps.StreetViewService();
         var radius = 100;
         function getStreetView(data, status) {
@@ -232,10 +265,6 @@ function viewModel() {
             }
         }
         streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
-
-
-        self.getPlacesDetails(marker, document.getElementById('output-block-data'));
-        self.getPlaceWiki(marker, document.getElementById('output-block-wiki'));
     }
 
     self.getPlacesDetails = function (marker, element) {
