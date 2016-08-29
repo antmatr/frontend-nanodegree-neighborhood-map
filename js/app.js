@@ -17,8 +17,9 @@ function viewModel() {
     ];
     self.markers = [];
     self.markersVisible = ko.observableArray();
-    self.placeInfoWindow;
     self.outputBlockActive = ko.observable(false);
+    self.outputBlockInfo = ko.observable('Click on a marker to see additional information.');
+    self.outputBlockWiki = ko.observable('');
 
     // Filters used in places list
     self.placesFilters = [
@@ -63,22 +64,23 @@ function viewModel() {
         self.initInitialPlaces = function (placesIDs) {
             var placeInfoService = new google.maps.places.PlacesService(self.map);
             var places = [];
+            var callback = function (place, status) {
+                if (status == google.maps.places.PlacesServiceStatus.OK) {
+                    places.push(place);
+                    if (places.length == placesIDs.length) {
+                        // As soon as we've got last place respond
+                        // we create markets for those places
+                        self.createMarkers(places);
+                    }
+                } else {
+                    alert('initInitialPlaces() error: ' + status);
+                }
+            };
             for (var i = 0; i < placesIDs.length; i++) {
                 placeInfoService.getDetails(placesIDs[i], callback);
-                function callback(place, status) {
-                    if (status == google.maps.places.PlacesServiceStatus.OK) {
-                        places.push(place);
-                        if (places.length == placesIDs.length) {
-                            // As soon as we've got last place respond
-                            // we create markets for those places
-                            self.createMarkers(places);
-                        };
-                    } else {
-                        alert('initInitialPlaces() error: ' + status);
-                    }
-                }
+                
             }
-        }
+        };
         self.initInitialPlaces(self.initialPlacesIds);
         self.initInputs();
     };
@@ -101,7 +103,7 @@ function viewModel() {
                 }
             });
         });
-    }
+    };
 
     // Check if marker belongs to this type of places
     self.checkMarkerType = function (type, marker) {
@@ -114,7 +116,7 @@ function viewModel() {
             }
         }
         return false;
-    }
+    };
 
     // Filtering for list and markers
     self.updateFilters = function (filter) {
@@ -139,14 +141,14 @@ function viewModel() {
             }
             fitToMarkers(self.markersVisible());
         }
-    }
+    };
 
     // Update additional place information
     self.showPlaceInfo = function (marker) {
         fitToMarkers([marker]);
         showInfoWindow(marker, self.placeInfoWindow);
         showOutputBlock(marker);
-    }
+    };
 
     // Create markers for the given array of places
     self.createMarkers = function (places) {
@@ -179,22 +181,22 @@ function viewModel() {
             self.markers.push(marker);
         }
         showMarkers(self.markers);
-    }
+    };
 
     self.hideMarkers = function (markers) {
         for (var i = 0; i < markers.length; i++) {
             markers[i].setMap(null);
         }
         self.markersVisible.removeAll();
-    }
+    };
 
     self.showMarkers = function (markers) {
         for (var i = 0; i < markers.length; i++) {
-            self.markersVisible.push(markers[i])
+            self.markersVisible.push(markers[i]);
             markers[i].setMap(self.map);
         }
         fitToMarkers(self.markersVisible());
-    }
+    };
 
     // Markers infowindow function
     self.showInfoWindow = function (marker, infowindow) {
@@ -202,13 +204,15 @@ function viewModel() {
             infowindow.marker = marker;
             infowindow.setContent('<h3 class="infowindow-title">' + marker.title + '</h3>');
             infowindow.open(self.map, marker);
+            marker.setAnimation(google.maps.Animation.BOUNCE);
             infowindow.addListener('closeclick', function () {
                 self.fitToMarkers(self.markersVisible());
                 self.outputBlockActive(false);
+                marker.setAnimation(null);
                 infowindow.marker = null;
             });
         }
-    }
+    };
 
     // map fit function
     self.fitToMarkers = function (markers) {
@@ -229,7 +233,7 @@ function viewModel() {
             // map will be fitted to the City boundaries
             self.map.fitBounds(self.boundsSPB);
         }
-    }
+    };
 
     // function of place additional info Compilation
     self.showOutputBlock = function (marker) {
@@ -239,10 +243,10 @@ function viewModel() {
         self.outputBlockActive(true);
 
         // google.places for additional info (Address, Phone, Image, Open Hours);
-        self.getPlacesDetails(marker, document.getElementById('output-block-data'));
+        self.getPlacesDetails(marker);
 
         // wikipedia API for some articles about selected place
-        self.getPlaceWiki(marker, document.getElementById('output-block-wiki'));
+        self.getPlaceWiki(marker);
 
         // creating google street view panorama
         var streetViewService = new google.maps.StreetViewService();
@@ -265,9 +269,9 @@ function viewModel() {
             }
         }
         streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
-    }
+    };
 
-    self.getPlacesDetails = function (marker, element) {
+    self.getPlacesDetails = function (marker) {
         var service = new google.maps.places.PlacesService(self.map);
         service.getDetails({
             placeId: marker.placeId
@@ -295,38 +299,42 @@ function viewModel() {
                         place.opening_hours.weekday_text[6];
                 }
                 innerHTML += '</div>';
-                element.innerHTML = innerHTML;
+                self.outputBlockInfo(innerHTML);
             }
             else {
-                element.innerHTML = 'Failed to get data from Google Places (error: ' + status + ')';
+                self.outputBlockInfo('Failed to get data from Google Places (error: ' + status + ')');
             }
         });
-    }
+    };
 
-    self.getPlaceWiki = function (marker, element) {
-        element.innerHTML = '';
+    self.getPlaceWiki = function (marker) {
+        self.outputBlockWiki('');
         var wikiRequestTimeout = setTimeout(function () {
-            element.innerHTML = '<h3>Where are no wikipedia resources about this place</h3>';
+            self.outputBlockWiki('<h3>There are no wikipedia resources about this place</h3>');
         }, 5000);
         url = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + marker.title + '&format=json&callback=wikiCallback';
         $.ajax({
             url: url,
-            dataType: 'jsonp',
-            success: function (data) {
-                var articles = data[1];
-                if (articles.length >= 1) {
-                    element.innerHTML = '<h3>Wikipedia articles:</h3>';
-                }
-                for (var i = 0, l = articles.length; i < l; i++) {
-                    var title = articles[i];
-                    element.innerHTML += '<li><a href="http://en.wikipedia.org/wiki/' + title + '">' + title + '</a></li>';
-                }
-                element.innerHTML += '<br><br>';
-            }
-        }).done(function () {
+            dataType: 'jsonp'
+        }).done(function (data) {
             clearTimeout(wikiRequestTimeout);
-        })
-    }
-};
+            var articles = data[1];
+            var innerHtml = '';
+            if (articles.length >= 1) {
+                innerHtml = '<h3>Wikipedia articles:</h3>';
+            }
+            for (var i = 0, l = articles.length; i < l; i++) {
+                var title = articles[i];
+                innerHtml += '<li><a href="http://en.wikipedia.org/wiki/' + title + '">' + title + '</a></li>';
+            }
+            innerHtml += '<br><br>';
+            self.outputBlockWiki(innerHtml);
+        });
+    };
+}
 
 ko.applyBindings(viewModel);
+
+function googleError() {
+    alert('Failed to connect Google Maps API');
+}

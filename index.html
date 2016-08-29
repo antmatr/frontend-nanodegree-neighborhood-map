@@ -19,8 +19,8 @@
                     <li data-bind="click: function(){self.updateFilters($data.filter);}, attr: { class: self.currentFilter() === $data.filter ? 'list-filters-item active' : 'list-filters-item' }, text:$data.name"></li>
                 </ul>
                 <ul class="list-contents" id="places-list" data-bind="foreach: markersVisible">
-                    <li class="list-contents-item" data-bind="click: function(){showPlaceInfo(this)}, visible: checkMarkerType(currentFilter(), $data)">
-                        <span class="list-contents-text" data-bind="text: title, event: {mouseover: function(){$data.setAnimation(google.maps.Animation.BOUNCE);}, mouseout: function(){$data.setAnimation(null);}}"></span>
+                    <li class="list-contents-item" data-bind="click: function(){showPlaceInfo(this), $data.setAnimation(google.maps.Animation.BOUNCE);}, visible: checkMarkerType(currentFilter(), $data)">
+                        <span class="list-contents-text" data-bind="text: title"></span>
                     </li>
                 </ul>
             </div>
@@ -31,10 +31,8 @@
         </section>
 
         <section class="output-block" id="output-block" data-bind="attr: { class: self.outputBlockActive() === true ? 'output-block active' : 'output-block'}">
-            <div class="places-info" id="output-block-data">
-                Click on a marker to see additional information.
-            </div>
-            <div class="wikipedia" id="output-block-wiki"></div>
+            <div class="places-info" id="output-block-data" data-bind="html: self.outputBlockInfo()"></div>
+            <div class="wikipedia" id="output-block-wiki" data-bind="html: self.outputBlockWiki()"></div>
             <div class="panorama" id="output-block-pano"></div>
         </section>
     </div>
@@ -42,6 +40,8 @@
     <script src="js/knockout-3.4.0.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/app.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyBxcE0sloWCoxfuq8lC43rhSLeYcdneAKc&v=3&callback=initMap"></script>
+    <script async defer 
+            src="https://maps.googleapis.com/maps/api/js?libraries=places,geometry,drawing&key=AIzaSyBxcE0sloWCoxfuq8lC43rhSLeYcdneAKc&v=3&callback=initMap"
+            onerror="googleError()"></script>
 </body>
 </html>
