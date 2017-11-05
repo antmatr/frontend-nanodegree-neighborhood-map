@@ -58,7 +58,7 @@
 
         // Function for transformation of initialPlacesIds
         // into real google.maps place-objects for further use
-        self.initInitialPlaces = function (placesIDs) {
+        self.initInitialPlaces = (placesIDs) => {
             let placeInfoService = new google.maps.places.PlacesService(self.map);
             let places = [];
             let callback = (place, status) => {
@@ -153,14 +153,14 @@
         self.hideMarkers(self.markersVisible());
         self.markers = [];
         for (let i = 0; i < places.length; i++) {
-            var icon = {
+            let icon = {
                 url: places[i].icon,
                 size: new google.maps.Size(30, 30),
                 origin: new google.maps.Point(0, 0),
                 anchor: new google.maps.Point(15, 15),
                 scaledSize: new google.maps.Size(30, 30)
             };
-            var marker = new google.maps.Marker({
+            let marker = new google.maps.Marker({
                 map: self.map,
                 icon: icon,
                 title: places[i].name,
@@ -308,27 +308,38 @@
 
     self.getPlaceWiki = (marker) => {
         self.outputBlockWiki('');
-        let wikiRequestTimeout = setTimeout(() => {
-            self.outputBlockWiki('<h3>There are no wikipedia resources about this place</h3>');
-        }, 5000);
-        url = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + marker.title + '&format=json&callback=wikiCallback';
-        $.ajax({
-            url: url,
-            dataType: 'jsonp'
-        }).done((data) => {
-            clearTimeout(wikiRequestTimeout);
-            let articles = data[1];
+        let url = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + marker.title + '&maxage=5&origin=*&format=json';
+
+        function loadWikiArticles() {
+            let xmlhttp = new XMLHttpRequest();
+            let articles;
             let innerHtml = '';
-            if (articles.length >= 1) {
-                innerHtml = '<h3>Wikipedia articles:</h3>';
-            }
-            for (let i = 0, l = articles.length; i < l; i++) {
-                let title = articles[i];
-                innerHtml += '<li><a href="http://en.wikipedia.org/wiki/' + title + '">' + title + '</a></li>';
-            }
-            innerHtml += '<br><br>';
-            self.outputBlockWiki(innerHtml);
-        });
+
+            xmlhttp.onreadystatechange = () => {
+                if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                    if (xmlhttp.status == 200) {
+                        articles = JSON.parse(xmlhttp.responseText)[1];
+                        if (articles.length >= 1) {
+                            innerHtml = '<h3>Wikipedia articles:</h3>';
+                            for (let i = 0, l = articles.length; i < l; i++) {
+                                let title = articles[i];
+                                innerHtml += `<li><a href="http://en.wikipedia.org/wiki/${title}">${title}</a></li>`;
+                            }
+                            innerHtml += '<br><br>';
+                            self.outputBlockWiki(innerHtml);
+                        } else {
+                            self.outputBlockWiki('<h3>There are no wikipedia resources about this place</h3>');
+                        }
+                    }
+                    else {
+                        self.outputBlockWiki(`Failed to get data from Wikipedia (error: response status: ${xmlhttp.status})`);
+                    }
+                }
+            };
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+        }
+        loadWikiArticles();
     };
 
 }
