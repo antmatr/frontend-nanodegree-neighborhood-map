@@ -1,8 +1,5 @@
-﻿var outputPano = document.getElementById('output-block-pano');
-var searchInput = document.getElementById('places-search');
-
-function viewModel() {
-    var self = this;
+﻿function viewModel() {
+    let self = this;
 
     // Array of hardcoded PlaceId's to initialization
     self.initialPlacesIds = [
@@ -46,7 +43,7 @@ function viewModel() {
     ];
     self.currentFilter = ko.observable(self.placesFilters[0].filter);
 
-    self.initMap = function () {
+    self.initMap = () => {
         // Base map, centred on Saint-Petersburg City
         self.map = new google.maps.Map(document.getElementById('map'), {
             center: { lat: 59.9342802, lng: 30.3350986 },
@@ -62,9 +59,9 @@ function viewModel() {
         // Function for transformation of initialPlacesIds
         // into real google.maps place-objects for further use
         self.initInitialPlaces = function (placesIDs) {
-            var placeInfoService = new google.maps.places.PlacesService(self.map);
-            var places = [];
-            var callback = function (place, status) {
+            let placeInfoService = new google.maps.places.PlacesService(self.map);
+            let places = [];
+            let callback = (place, status) => {
                 if (status == google.maps.places.PlacesServiceStatus.OK) {
                     places.push(place);
                     if (places.length == placesIDs.length) {
@@ -76,7 +73,7 @@ function viewModel() {
                     alert('initInitialPlaces() error: ' + status);
                 }
             };
-            for (var i = 0; i < placesIDs.length; i++) {
+            for (let i = 0; i < placesIDs.length; i++) {
                 placeInfoService.getDetails(placesIDs[i], callback);
                 
             }
@@ -86,16 +83,17 @@ function viewModel() {
     };
 
     // Searchbox and SearchBtn initialization
-    self.initInputs = function () {
-        var searchBox = new google.maps.places.SearchBox(searchInput, {
+    self.initInputs = () => {
+        let searchInput = document.getElementById('places-search');
+        let searchBox = new google.maps.places.SearchBox(searchInput, {
             bounds: self.boundsSPB
         });
-        document.getElementById('places-search-go').addEventListener('click', function () {
-            var placesService = new google.maps.places.PlacesService(self.map);
+        document.getElementById('places-search-go').addEventListener('click', () => {
+            let placesService = new google.maps.places.PlacesService(self.map);
             placesService.textSearch({
                 query: searchInput.value,
                 bounds: self.boundsSPB
-            }, function (results, status) {
+            }, (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK) {
                     self.createMarkers(results);
                 } else {
@@ -106,11 +104,11 @@ function viewModel() {
     };
 
     // Check if marker belongs to this type of places
-    self.checkMarkerType = function (type, marker) {
+    self.checkMarkerType = (type, marker) => {
         if (type === 'all') {
             return true;
         }
-        for (var i = 0; i < marker.types.length; i++) {
+        for (let i = 0; i < marker.types.length; i++) {
             if (marker.types[i] === type && type != 'other') {
                 return true;
             }
@@ -119,24 +117,24 @@ function viewModel() {
     };
 
     // Filtering for list and markers
-    self.updateFilters = function (filter) {
+    self.updateFilters = (filter) => {
         // do somthing only if it is not the same filter:
         if (self.currentFilter() != filter) {
             self.currentFilter(filter);
             self.hideMarkers(self.markersVisible());
             self.markersVisible.removeAll();
             if (filter === 'all') {
-                for (var i = 0; i < self.markers.length; i++) {
+                for (let i = 0; i < self.markers.length; i++) {
                     self.markersVisible.push(self.markers[i]);
                 }
             } else {
-                for (var i = 0; i < self.markers.length; i++) {
+                for (let i = 0; i < self.markers.length; i++) {
                     if (self.markers[i].types.indexOf(filter) != -1) {
                         self.markersVisible.push(self.markers[i]);
                     }
                 }
             }
-            for (var i = 0; i < self.markersVisible().length; i++) {
+            for (let i = 0; i < self.markersVisible().length; i++) {
                 self.markersVisible()[i].setMap(self.map);
             }
             fitToMarkers(self.markersVisible());
@@ -144,17 +142,17 @@ function viewModel() {
     };
 
     // Update additional place information
-    self.showPlaceInfo = function (marker) {
+    self.showPlaceInfo = (marker) => {
         fitToMarkers([marker]);
         showInfoWindow(marker, self.placeInfoWindow);
         showOutputBlock(marker);
     };
 
     // Create markers for the given array of places
-    self.createMarkers = function (places) {
+    self.createMarkers = (places) => {
         self.hideMarkers(self.markersVisible());
         self.markers = [];
-        for (var i = 0; i < places.length; i++) {
+        for (let i = 0; i < places.length; i++) {
             var icon = {
                 url: places[i].icon,
                 size: new google.maps.Size(30, 30),
@@ -171,7 +169,7 @@ function viewModel() {
                 types: places[i].types
             });
             self.placeInfoWindow = new google.maps.InfoWindow();
-            marker.addListener('click', function () {
+            marker.addListener('click', function() {
                 if (self.placeInfoWindow.marker == this) {
                     console.log("This infowindow already is on this marker!");
                 } else {
@@ -183,15 +181,15 @@ function viewModel() {
         showMarkers(self.markers);
     };
 
-    self.hideMarkers = function (markers) {
-        for (var i = 0; i < markers.length; i++) {
+    self.hideMarkers = (markers) => {
+        for (let i = 0; i < markers.length; i++) {
             markers[i].setMap(null);
         }
         self.markersVisible.removeAll();
     };
 
-    self.showMarkers = function (markers) {
-        for (var i = 0; i < markers.length; i++) {
+    self.showMarkers = (markers) => {
+        for (let i = 0; i < markers.length; i++) {
             self.markersVisible.push(markers[i]);
             markers[i].setMap(self.map);
         }
@@ -199,13 +197,13 @@ function viewModel() {
     };
 
     // Markers infowindow function
-    self.showInfoWindow = function (marker, infowindow) {
+    self.showInfoWindow = (marker, infowindow) => {
         if (infowindow.marker != marker) {
             infowindow.marker = marker;
             infowindow.setContent('<h3 class="infowindow-title">' + marker.title + '</h3>');
             infowindow.open(self.map, marker);
             marker.setAnimation(google.maps.Animation.BOUNCE);
-            infowindow.addListener('closeclick', function () {
+            infowindow.addListener('closeclick', () => {
                 self.fitToMarkers(self.markersVisible());
                 self.outputBlockActive(false);
                 marker.setAnimation(null);
@@ -215,10 +213,10 @@ function viewModel() {
     };
 
     // map fit function
-    self.fitToMarkers = function (markers) {
+    self.fitToMarkers = (markers) => {
         if (markers.length > 0) {
-            var bounds = new google.maps.LatLngBounds();
-            for (var i = 0; i < markers.length; i++) {
+            let bounds = new google.maps.LatLngBounds();
+            for (let i = 0; i < markers.length; i++) {
                 markers[i].setMap(self.map);
                 bounds.extend(markers[i].position);
             }
@@ -249,13 +247,14 @@ function viewModel() {
         self.getPlaceWiki(marker);
 
         // creating google street view panorama
-        var streetViewService = new google.maps.StreetViewService();
-        var radius = 100;
-        function getStreetView(data, status) {
+        let streetViewService = new google.maps.StreetViewService();
+        let radius = 100;
+        let outputPano = document.getElementById('output-block-pano');
+        getStreetView = (data, status) => {
             if (status == google.maps.StreetViewStatus.OK) {
-                var nearStreetViewLocation = data.location.latLng;
-                var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
-                var panoramaOptions = {
+                let nearStreetViewLocation = data.location.latLng;
+                let heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
+                let panoramaOptions = {
                     position: nearStreetViewLocation,
                     pov: {
                         heading: heading,
@@ -263,7 +262,7 @@ function viewModel() {
                     },
                     addressControl: false
                 };
-                var panorama = new google.maps.StreetViewPanorama(outputPano, panoramaOptions);
+                let panorama = new google.maps.StreetViewPanorama(outputPano, panoramaOptions);
             } else {
                 outputPano.innerText = 'Failed to get data from Google Street View (error: ' + status + ')';
             }
@@ -271,13 +270,13 @@ function viewModel() {
         streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
     };
 
-    self.getPlacesDetails = function (marker) {
-        var service = new google.maps.places.PlacesService(self.map);
+    self.getPlacesDetails = (marker) => {
+        let service = new google.maps.places.PlacesService(self.map);
         service.getDetails({
             placeId: marker.placeId
-        }, function (place, status) {
+        }, (place, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                var innerHTML = '<div>';
+                let innerHTML = '<div>';
                 if (place.photos) {
                     innerHTML += '<img src="' + place.photos[0].getUrl(
                         { maxHeight: 400, maxWidth: 340 }) + '">';
@@ -307,30 +306,31 @@ function viewModel() {
         });
     };
 
-    self.getPlaceWiki = function (marker) {
+    self.getPlaceWiki = (marker) => {
         self.outputBlockWiki('');
-        var wikiRequestTimeout = setTimeout(function () {
+        let wikiRequestTimeout = setTimeout(() => {
             self.outputBlockWiki('<h3>There are no wikipedia resources about this place</h3>');
         }, 5000);
         url = 'https://en.wikipedia.org/w/api.php?action=opensearch&search=' + marker.title + '&format=json&callback=wikiCallback';
         $.ajax({
             url: url,
             dataType: 'jsonp'
-        }).done(function (data) {
+        }).done((data) => {
             clearTimeout(wikiRequestTimeout);
-            var articles = data[1];
-            var innerHtml = '';
+            let articles = data[1];
+            let innerHtml = '';
             if (articles.length >= 1) {
                 innerHtml = '<h3>Wikipedia articles:</h3>';
             }
-            for (var i = 0, l = articles.length; i < l; i++) {
-                var title = articles[i];
+            for (let i = 0, l = articles.length; i < l; i++) {
+                let title = articles[i];
                 innerHtml += '<li><a href="http://en.wikipedia.org/wiki/' + title + '">' + title + '</a></li>';
             }
             innerHtml += '<br><br>';
             self.outputBlockWiki(innerHtml);
         });
     };
+
 }
 
 ko.applyBindings(viewModel);
